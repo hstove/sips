@@ -191,7 +191,15 @@ The new deposit address format for sBTC that will be used by miners may require 
 
 # Activation
 
-This SIP should be activated upon receiving sign off from the Technical CAB, ensuring that the details described herein are correct.
+Activation of this SIP is dependent on approval via a community vote. Users can vote to approve this SIP with either their locked/stacked STX or with
+unlocked/liquid STX, or both.
+
+More details about the voting process will be added soon.
+
+## Activation Height
+
+If the SIP is approved, epoch 4.1 will activate at Bitcoin block height
+979,500.
 
 # Reference Implementation
 
