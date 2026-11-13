@@ -28,7 +28,7 @@ Discussions-To:
 
 This SIP defines the consensus changes that will activate with Stacks epoch 4.1.
 
-The SIP introduces Clarity 7, which includes a number of changes to how contracts are analyzed and type checked. These changes improve the robustness of Clarity's overall type safety. Because of these improvements, new contracts after activation may only be deployed with Clarity 7.
+The SIP introduces Clarity 7, which includes a number of changes to how contracts are analyzed and type checked. These changes improve the robustness of Clarity's overall type safety. Because of these improvements, contracts deployed after activation may only be deployed with the latest Clarity version, which is Clarity 7 in epoch 4.1.
 
 The SIP also defines the move away from using a threshold-based deposit address for sBTC, which miners use to send BTC to the `pox-5` contract. After activation, miners will deposit to a pay-to-taproot (P2TR) multisig address.
 
@@ -49,7 +49,7 @@ This SIP fixes known issues in the implementation of the Clarity VM. Except wher
 3. **Consistent value limits:** Some values were not held to the rules that apply to values built in Clarity. They are now enforced no matter where a value comes from.
 4. **Error classification and cost accounting:** Some failures made a transaction rejectable when they should have let it be included in a block as a failure, and some work was done without being charged. These errors are now includable where appropriate, and costs are charged for all the work performed, including type checking and the identifiers carried by trait and principal values.
 
-To provide better guarantees about type safety and consistency in the future, this SIP also defines that newly deployed contracts may only be deployed with the latest version of Clarity.
+To provide better guarantees about type safety and consistency in the future, this SIP also defines that contracts deployed after activation may only be deployed with the latest Clarity version.
 
 # Specification
 
@@ -59,7 +59,7 @@ Analysis changes affect only contracts deployed after activation; runtime change
 
 ### Removal of versioned contract deploys
 
-After activation, users will no longer be able to deploy contracts with a specified version. Instead, newly deployed contracts will only be deployed with the latest Clarity version. This ensures greater consistency in Clarity's type checking and runtime behavior.
+After activation, contracts may only be deployed with the latest Clarity version, which is Clarity 7 in epoch 4.1. This removes the choice of version offered by the Versioned Smart Contract payload (payload type ID `0x06`) defined in [SIP-015](../sip-015/sip-015-network-upgrade.md). After activation, a transaction with this payload is invalid and cannot be included in a block. This ensures greater consistency in Clarity's type checking and runtime behavior.
 
 ### Joining tuples with different fields
 
