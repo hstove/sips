@@ -48,7 +48,7 @@ is held by the Stacks Open Internet Foundation.
 
 This SIP fixes known issues in the implementation of the Clarity VM. Except where noted, it does not change the intended behavior of the language. Because each fix changes which contracts can be deployed, the results of contract calls, or whether a transaction is valid, the fixes must activate at an epoch boundary. They fall into these categories:
 
-1. **Type-checking soundness:** In a few cases, the type checker accepted code whose runtime values didn't match their inferred types, or skipped checking some expressions entirely. These checks are tightened so that the inferred types match what happens at runtime.
+1. **Type-checking soundness:** In a few cases, the type checker accepted code whose runtime values did not match their inferred types, or skipped checking some expressions entirely. These checks are tightened so that the inferred types match what happens at runtime.
 2. **Analysis/runtime consistency:** The analyzer and the runtime sometimes resolved the same code differently. As a result, a contract could pass analysis and then behave unexpectedly at runtime. The runtime and the analyzer now follow the same rules.
 3. **Consistent value limits:** Some values were not held to the rules that apply to values built in Clarity. They are now enforced no matter where a value comes from.
 4. **Error classification and cost accounting:** Some failures made a transaction rejectable when they should have let it be included in a block as a failure, and some work was done without being charged. These errors are now includable where appropriate, and costs are charged for all the work performed, including type checking and the identifiers carried by trait and principal values.
@@ -67,7 +67,7 @@ After activation, users will no longer be able to deploy contracts with a specif
 
 ### Joining tuples with different fields
 
-The type checker let tuples with different fields unify to a narrower type, so a value could carry fields its static type didn't have. Before 4.1, `fetch` is typed `{a: uint}` but returns `{a: u1, b: true}`, and the hidden `b` then shows up through `merge`, `is-eq` and list construction. From 4.1 this fails analysis.
+The type checker let tuples with different fields unify to a narrower type, so a value could carry fields its static type did not have. Before activation, `fetch` is typed `{a: uint}` but returns `{a: u1, b: true}`, and the hidden `b` then shows up through `merge`, `is-eq` and list construction. After activation, this fails analysis.
 
 ```clarity
 (define-read-only (fetch)
@@ -101,7 +101,7 @@ This also applies to native Clarity functions, where the user could provide extr
 
 ### `replace-at?` with zero-length values
 
-A `(buff 1)` element type accepts `0x`, so `(replace-at? 0x0102 u0 0x)` passed analysis and then failed at runtime. It's now a type error when the element is empty at analysis time.
+A `(buff 1)` element type accepts `0x`, so `(replace-at? 0x0102 u0 0x)` passed analysis and then failed at runtime. It is now a type error when the element is empty at analysis time.
 
 ### `let` names vs globals
 
@@ -168,10 +168,10 @@ Stacks supports a set of operations that are sent as Bitcoin transactions. Three
 
 Before epoch 4.1, these operations are accepted by the sortition DB and processed by the Stacks chainstate:
 
-- `stack-stx` and `delegate-stx` call the active PoX contract, `pox-5`, which doesn't define these functions. The call fails and is rolled back without a receipt, so the operation has no effect.
+- `stack-stx` and `delegate-stx` call the active PoX contract, `pox-5`, which does not define these functions. The call fails and is rolled back without a receipt, so the operation has no effect.
 - `vote-for-aggregate-key` calls `.signers-voting`, which still executes and produces a receipt, but nothing uses the result.
 
-After activation, these operations are rejected if the Bitcoin block they're mined in is in epoch 4.1 or later. They aren't recorded in the sortition DB, so they're excluded from the burn block's consensus hash and the Stacks chainstate never processes them. As a result, `vote-for-aggregate-key` operations no longer produce receipts. Operations mined before epoch 4.1 are still accepted, so replaying the chain history gives the same results.
+After activation, these operations are rejected if the Bitcoin block they are mined in is in epoch 4.1 or later. They are not recorded in the sortition DB, so they are excluded from the burn block's consensus hash and the Stacks chainstate never processes them. As a result, `vote-for-aggregate-key` operations no longer produce receipts. Operations mined before epoch 4.1 are still accepted, so replaying the chain history gives the same results.
 
 # Related Work
 
