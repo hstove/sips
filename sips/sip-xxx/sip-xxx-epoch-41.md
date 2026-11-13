@@ -16,6 +16,8 @@ Type: Consensus
 
 Layer: Consensus (hard fork)
 
+Requires: 044, 045
+
 Created: 2026-10-21
 
 License: BSD-2-Clause
@@ -23,6 +25,8 @@ License: BSD-2-Clause
 Sign-off:
 
 Discussions-To:
+
+- https://github.com/stacksgov/sips/pull/284
 
 # Abstract
 
@@ -44,7 +48,7 @@ is held by the Stacks Open Internet Foundation.
 
 This SIP fixes known issues in the implementation of the Clarity VM. Except where noted, it does not change the intended behavior of the language. Because each fix changes which contracts can be deployed, the results of contract calls, or whether a transaction is valid, the fixes must activate at an epoch boundary. They fall into these categories:
 
-1. **Type-checking soundness:** In a few cases, the type checker accepted code whose runtime values didn't match their inferred types, or skipped checking some expressions entirely. These checks are tightened so that the inferred types match what happens at runtime.
+1. **Type-checking soundness:** In a few cases, the type checker accepted code whose runtime values did not match their inferred types, or skipped checking some expressions entirely. These checks are tightened so that the inferred types match what happens at runtime.
 2. **Analysis/runtime consistency:** The analyzer and the runtime sometimes resolved the same code differently. As a result, a contract could pass analysis and then behave unexpectedly at runtime. The runtime and the analyzer now follow the same rules.
 3. **Consistent value limits:** Some values were not held to the rules that apply to values built in Clarity. They are now enforced no matter where a value comes from.
 4. **Error classification and cost accounting:** Some failures made a transaction rejectable when they should have let it be included in a block as a failure, and some work was done without being charged. These errors are now includable where appropriate, and costs are charged for all the work performed, including type checking and the identifiers carried by trait and principal values.
@@ -53,7 +57,7 @@ To provide better guarantees about type safety and consistency in the future, th
 
 # Specification
 
-## Clarity Type Soundness and Runtime consistency
+## Clarity type soundness and runtime consistency
 
 Analysis changes affect only contracts deployed after activation; runtime changes, noted below, apply to all contracts.
 
@@ -63,7 +67,7 @@ After activation, users will no longer be able to deploy contracts with a specif
 
 ### Joining tuples with different fields
 
-The type checker let tuples with different fields unify to a narrower type, so a value could carry fields its static type didn't have. Before 4.1, `fetch` is typed `{a: uint}` but returns `{a: u1, b: true}`, and the hidden `b` then shows up through `merge`, `is-eq` and list construction. From 4.1 this fails analysis.
+The type checker let tuples with different fields unify to a narrower type, so a value could carry fields its static type did not have. Before activation, `fetch` is typed `{a: uint}` but returns `{a: u1, b: true}`, and the hidden `b` then shows up through `merge`, `is-eq` and list construction. After activation, this fails analysis.
 
 ```clarity
 (define-read-only (fetch)
@@ -85,6 +89,7 @@ An empty sequence makes `fold` return its initial value unchanged, but the resul
 Extra arguments to user-defined functions were never type-checked, but they were evaluated. That could even cause an early return before the runtime's argument-count check ran:
 
 ```clarity
+(define-data-var touched bool false)
 (define-private (one (x uint)) x)
 (define-public (escape)
   (begin
@@ -96,7 +101,7 @@ This also applies to native Clarity functions, where the user could provide extr
 
 ### `replace-at?` with zero-length values
 
-A `(buff 1)` element type accepts `0x`, so `(replace-at? 0x0102 u0 0x)` passed analysis and then failed at runtime. It's now a type error when the element is empty at analysis time.
+A `(buff 1)` element type accepts `0x`, so `(replace-at? 0x0102 u0 0x)` passed analysis and then failed at runtime. It is now a type error when the element is empty at analysis time.
 
 ### `let` names vs globals
 
@@ -104,7 +109,7 @@ The runtime only checked `let` names against function names, not against other g
 
 ### Using a contract's own traits during deployment
 
-Previously, trait lookups always used a database lookup, so calling a self-defined trait during deployment would fail. Previously, the following example would fail with `NoSuchContract`, but will work after activation.
+Previously, trait lookups always used a database lookup, so calling a self-defined trait during deployment would fail. The following example failed with `NoSuchContract` and succeeds after activation.
 
 ```clarity
 (define-trait trait-1 ((foo () (response bool uint))))
@@ -125,13 +130,13 @@ Contract names longer than 40 bytes are now rejected everywhere:
 - `from-consensus-buff?` (returns `none`)
 - `principal-destruct?` (errors)
 
-### Costs for type checking now run before read-only checks
+### Type checking now runs before read-only checks
 
-Previously, contract analysis would first run a read-only check before type analysis, which doesn't incur any cost. Now, type analysis occurs before read-only checks, so contracts that fail analysis are now always charged for type checking.
+Previously, contract analysis ran the read-only check first. That check incurs no cost. Now, type analysis occurs before read-only checks, so contracts that fail analysis are now always charged for type checking.
 
 ### Changes to costs for contract and trait identifiers
 
-Trait values and contract principals carry identifiers (such as a contract name and trait name), and those values didn't contribute to cost and memory charges. After epoch 4.1, these are charged appropriately. This also affects cost computations for existing values.
+Trait values and contract principals carry identifiers (such as a contract name and trait name), and those identifiers did not contribute to cost and memory charges. After epoch 4.1, these are charged appropriately. This also affects cost computations for existing values.
 
 ### Reserved names
 
@@ -139,17 +144,17 @@ After activation, a function may use a reserved name only to implement a method 
 
 ### Includable transactions
 
-"Includable" transactions refer to transactions that may be included as failed transactions in a block, and still incur a fee. SIP-039 introduced the concept of includable transactions, and began the process of converting all known rejectable transactions to be includable. New classes of includable transactions are:
+Includable transactions are transactions that may be included as failed transactions in a block, and still incur a fee. SIP-039 introduced the concept of includable transactions, and began the process of converting all known rejectable transactions to be includable. New classes of includable transactions are:
 
-- An empty `replace-at?` element at runtime
-- Using `restrict-assets?` with `with-all-assets-unsafe`
+- An empty `replace-at?` element at runtime.
+- Using `restrict-assets?` with `with-all-assets-unsafe`.
 - `block-reward` now returns `none` until the value is written, instead of resulting in a rejectable transaction. Note that this may not result in a failed transaction.
 
 ## sBTC deposit address v2 for miner commits
 
 Since epoch 4.0, miners send BTC to the `pox-5` contract by spending to an sBTC deposit address. The current miner code creates this address using the aggregate key published by the sBTC signers.
 
-After activation, in the first reward cycle that starts after epoch 4.1, miners will use the v2 sBTC deposit address format. This new format utilizes the public keys of sBTC signers to generate a k-of-n multisig pay-to-taproot address.
+After activation, in the first reward cycle that starts after epoch 4.1 activates, miners will use the v2 sBTC deposit address format. This new format utilizes the public keys of sBTC signers to generate a k-of-n multisig pay-to-taproot address.
 
 For more information on the v2 deposit address format, refer to [sbtc#2142](https://github.com/stacks-sbtc/sbtc/issues/2142).
 
@@ -163,10 +168,10 @@ Stacks supports a set of operations that are sent as Bitcoin transactions. Three
 
 Before epoch 4.1, these operations are accepted by the sortition DB and processed by the Stacks chainstate:
 
-- `stack-stx` and `delegate-stx` call the active PoX contract, `pox-5`, which doesn't define these functions. The call fails and is rolled back without a receipt, so the operation has no effect.
+- `stack-stx` and `delegate-stx` call the active PoX contract, `pox-5`, which does not define these functions. The call fails and is rolled back without a receipt, so the operation has no effect.
 - `vote-for-aggregate-key` calls `.signers-voting`, which still executes and produces a receipt, but nothing uses the result.
 
-After activation, these operations are rejected if the Bitcoin block they're mined in is in epoch 4.1 or later. They aren't recorded in the sortition DB, so they're excluded from the burn block's consensus hash and the Stacks chainstate never processes them. As a result, `vote-for-aggregate-key` operations no longer produce receipts. Operations mined before epoch 4.1 are still accepted, so replaying the chain history gives the same results.
+After activation, these operations are rejected if the Bitcoin block they are mined in is in epoch 4.1 or later. They are not recorded in the sortition DB, so they are excluded from the burn block's consensus hash and the Stacks chainstate never processes them. As a result, `vote-for-aggregate-key` operations no longer produce receipts. Operations mined before epoch 4.1 are still accepted, so replaying the chain history gives the same results.
 
 # Related Work
 
@@ -203,6 +208,4 @@ If the SIP is approved, epoch 4.1 will activate at Bitcoin block height
 
 # Reference Implementation
 
-All functionality proposed in this SIP is implemented or in progress in the
-[`main` branch](https://github.com/stacks-network/stacks-core/tree/main)
-on https://github.com/stacks-network/stacks-core.
+All functionality proposed in this SIP is implemented or in progress in the [`main` branch](https://github.com/stacks-network/stacks-core/tree/main) of [stacks-core](https://github.com/stacks-network/stacks-core).
