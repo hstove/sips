@@ -1,6 +1,6 @@
 # Preamble
 
-SIP Number: XXX
+SIP Number: 046
 
 Title: Epoch 4.1 and Clarity 7
 
@@ -8,7 +8,7 @@ Author(s):
 
 - Hank Stoever <hank@stackslabs.com>
 
-Status: Draft
+Status: Accepted
 
 Consideration: Technical
 
@@ -22,13 +22,15 @@ License: BSD-2-Clause
 
 Sign-off:
 
+- Werner <werner@trustmachines.co>, SIP Editor; 2026-11-13
+
 Discussions-To:
 
 # Abstract
 
 This SIP defines the consensus changes that will activate with Stacks epoch 4.1.
 
-The SIP introduces Clarity 7, which includes a number of changes to how contracts are analyzed and type checked. These changes improve the robustness of Clarity's overall type safety. Because of these improvements, new contracts after activation may only be deployed with Clarity 7.
+The SIP introduces Clarity 7, which includes a number of changes to how contracts are analyzed and type checked. These changes improve the robustness of Clarity's overall type safety. Because of these improvements, contracts deployed after activation may only be deployed with the latest Clarity version, which is Clarity 7 in epoch 4.1.
 
 The SIP also defines the move away from using a threshold-based deposit address for sBTC, which miners use to send BTC to the `pox-5` contract. After activation, miners will deposit to a pay-to-taproot (P2TR) multisig address.
 
@@ -49,7 +51,7 @@ This SIP fixes known issues in the implementation of the Clarity VM. Except wher
 3. **Consistent value limits:** Some values were not held to the rules that apply to values built in Clarity. They are now enforced no matter where a value comes from.
 4. **Error classification and cost accounting:** Some failures made a transaction rejectable when they should have let it be included in a block as a failure, and some work was done without being charged. These errors are now includable where appropriate, and costs are charged for all the work performed, including type checking and the identifiers carried by trait and principal values.
 
-To provide better guarantees about type safety and consistency in the future, this SIP also defines that newly deployed contracts may only be deployed with the latest version of Clarity.
+To provide better guarantees about type safety and consistency in the future, this SIP also defines that contracts deployed after activation may only be deployed with the latest Clarity version.
 
 # Specification
 
@@ -59,7 +61,7 @@ Analysis changes affect only contracts deployed after activation; runtime change
 
 ### Removal of versioned contract deploys
 
-After activation, users will no longer be able to deploy contracts with a specified version. Instead, newly deployed contracts will only be deployed with the latest Clarity version. This ensures greater consistency in Clarity's type checking and runtime behavior.
+After activation, contracts may only be deployed with the latest Clarity version, which is Clarity 7 in epoch 4.1. This removes the choice of version offered by the Versioned Smart Contract payload (payload type ID `0x06`) defined in [SIP-015](../sip-015/sip-015-network-upgrade.md). After activation, a transaction with this payload is invalid and cannot be included in a block. This ensures greater consistency in Clarity's type checking and runtime behavior.
 
 ### Joining tuples with different fields
 
@@ -117,6 +119,10 @@ Previously, trait lookups always used a database lookup, so calling a self-defin
 `from-consensus-buff?` could build a tuple with duplicate keys, which breaks its own declared type. Typed decoding now requires exactly the declared fields; otherwise `from-consensus-buff?` returns `none`.
 
 ### 40-byte contract names
+
+This SIP amends the contract name length in
+[SIP-005](../sip-005/sip-005-blocks-and-transactions.md). SIP-005 allows
+contract names of up to 128 bytes. After activation, the limit is 40 bytes.
 
 Contract names longer than 40 bytes are now rejected everywhere:
 
@@ -181,6 +187,11 @@ This SIP builds upon the existing definitions of the Clarity language:
 
 It also builds upon the introduction of Bitcoin Staking as it relates to how miners send funds through sBTC, as defined in [SIP-045](../sip-045/sip-045-pox-5-bitcoin-staking.md).
 
+It amends the contract name length defined in
+[SIP-005](../sip-005/sip-005-blocks-and-transactions.md) and removes the
+Versioned Smart Contract transaction payload defined in
+[SIP-015](../sip-015/sip-015-network-upgrade.md).
+
 # Backwards Compatibility
 
 There are a number of consensus-breaking changes in this SIP that require a hard fork. These include a variety of changes to the Clarity language, included in Clarity 7 and described in this SIP.
@@ -191,10 +202,36 @@ The new deposit address format for sBTC that will be used by miners may require 
 
 # Activation
 
-Activation of this SIP is dependent on approval via a community vote. Users can vote to approve this SIP with either their locked/stacked STX or with
-unlocked/liquid STX, or both.
+Users can vote to approve this SIP with either their staked STX or with liquid
+STX, or both.
 
-More details about the voting process will be added soon.
+In order for this SIP to activate, the following criteria must be met:
+
+- At least 80 million staked STX must participate in the vote, and at least 80%
+  of all staked STX committed by voting must be in favor of the proposal (vote
+  "yes").
+- At least 80% of all liquid STX committed by voting must be in favor of the
+  proposal (vote "yes").
+
+All STX holders vote by sending Stacks dust to the corresponding Stacks address
+from the account where their STX are held (staked or liquid). Voting power is
+determined by a snapshot of the amount of STX (staked and liquid) in that
+account at Bitcoin block height 976,850, the height at which voting starts.
+This prevents the same STX from being transferred between accounts and used to
+vote twice.
+
+Bitcoin stakers vote the same way, from the Stacks account that registered
+their bond. The STX locked in that account counts as staked STX. There is no
+Bitcoin voting transaction for this vote.
+
+| Vote | Stacks                                | ASCII Encoding         | Msg        |
+| ---- | ------------------------------------- | ---------------------- | ---------- |
+| yes  | `SP00000000001WPAWSDEDMQ0B9M6VRF7M9A` | `7965732d7369702d3436` | yes-sip-46 |
+| no   | `SP000000000006WVSDEDMQ0B9M6VQKRB6B`  | `6e6f2d7369702d3436`   | no-sip-46  |
+
+Voting starts at Bitcoin block height 976,850 and ends at Bitcoin block height
+978,350. Votes confirmed outside this window are not counted. If the criteria
+are not met at the end of Bitcoin block height 978,350, the SIP is Rejected.
 
 ## Activation Height
 
