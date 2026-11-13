@@ -16,6 +16,8 @@ Type: Consensus
 
 Layer: Consensus (hard fork)
 
+Requires: 044, 045
+
 Created: 2026-10-21
 
 License: BSD-2-Clause
@@ -23,6 +25,8 @@ License: BSD-2-Clause
 Sign-off:
 
 Discussions-To:
+
+- https://github.com/stacksgov/sips/pull/284
 
 # Abstract
 
@@ -203,6 +207,4 @@ If the SIP is approved, epoch 4.1 will activate at Bitcoin block height
 
 # Reference Implementation
 
-All functionality proposed in this SIP is implemented or in progress in the
-[`main` branch](https://github.com/stacks-network/stacks-core/tree/main)
-on https://github.com/stacks-network/stacks-core.
+All functionality proposed in this SIP is implemented or in progress in the [`main` branch](https://github.com/stacks-network/stacks-core/tree/main) of [stacks-core](https://github.com/stacks-network/stacks-core).
