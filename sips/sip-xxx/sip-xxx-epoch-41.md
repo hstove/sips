@@ -123,9 +123,7 @@ Previously, trait lookups always used a database lookup, so calling a self-defin
 
 ### 40-byte contract names
 
-This SIP amends the contract name length in
-[SIP-005](../sip-005/sip-005-blocks-and-transactions.md). SIP-005 allows
-contract names of up to 128 bytes. After activation, the limit is 40 bytes.
+This SIP amends the Clarity value encoding of contract principals in [SIP-005](../sip-005/sip-005-blocks-and-transactions.md), which allows contract names of up to 128 bytes. After activation, contract principals inside Clarity values, including token-transfer and coinbase recipients, are limited to 40 bytes. Values already stored in chainstate stay readable. Contract-name fields encoded as a bare contract name (call targets, deploys, post-condition principals and asset identifiers) have been limited to 40 bytes since Stacks 2.0, despite the 128-byte limit stated in SIP-005.
 
 Contract names longer than 40 bytes are now rejected everywhere:
 
