@@ -57,7 +57,7 @@ To provide better guarantees about type safety and consistency in the future, th
 
 # Specification
 
-## Clarity Type Soundness and Runtime consistency
+## Clarity type soundness and runtime consistency
 
 Analysis changes affect only contracts deployed after activation; runtime changes, noted below, apply to all contracts.
 
@@ -89,6 +89,7 @@ An empty sequence makes `fold` return its initial value unchanged, but the resul
 Extra arguments to user-defined functions were never type-checked, but they were evaluated. That could even cause an early return before the runtime's argument-count check ran:
 
 ```clarity
+(define-data-var touched bool false)
 (define-private (one (x uint)) x)
 (define-public (escape)
   (begin
@@ -108,7 +109,7 @@ The runtime only checked `let` names against function names, not against other g
 
 ### Using a contract's own traits during deployment
 
-Previously, trait lookups always used a database lookup, so calling a self-defined trait during deployment would fail. Previously, the following example would fail with `NoSuchContract`, but will work after activation.
+Previously, trait lookups always used a database lookup, so calling a self-defined trait during deployment would fail. The following example failed with `NoSuchContract` and succeeds after activation.
 
 ```clarity
 (define-trait trait-1 ((foo () (response bool uint))))
@@ -129,13 +130,13 @@ Contract names longer than 40 bytes are now rejected everywhere:
 - `from-consensus-buff?` (returns `none`)
 - `principal-destruct?` (errors)
 
-### Costs for type checking now run before read-only checks
+### Type checking now runs before read-only checks
 
-Previously, contract analysis would first run a read-only check before type analysis, which doesn't incur any cost. Now, type analysis occurs before read-only checks, so contracts that fail analysis are now always charged for type checking.
+Previously, contract analysis ran the read-only check first. That check incurs no cost. Now, type analysis occurs before read-only checks, so contracts that fail analysis are now always charged for type checking.
 
 ### Changes to costs for contract and trait identifiers
 
-Trait values and contract principals carry identifiers (such as a contract name and trait name), and those values didn't contribute to cost and memory charges. After epoch 4.1, these are charged appropriately. This also affects cost computations for existing values.
+Trait values and contract principals carry identifiers (such as a contract name and trait name), and those identifiers did not contribute to cost and memory charges. After epoch 4.1, these are charged appropriately. This also affects cost computations for existing values.
 
 ### Reserved names
 
@@ -143,17 +144,17 @@ After activation, a function may use a reserved name only to implement a method 
 
 ### Includable transactions
 
-"Includable" transactions refer to transactions that may be included as failed transactions in a block, and still incur a fee. SIP-039 introduced the concept of includable transactions, and began the process of converting all known rejectable transactions to be includable. New classes of includable transactions are:
+Includable transactions are transactions that may be included as failed transactions in a block, and still incur a fee. SIP-039 introduced the concept of includable transactions, and began the process of converting all known rejectable transactions to be includable. New classes of includable transactions are:
 
-- An empty `replace-at?` element at runtime
-- Using `restrict-assets?` with `with-all-assets-unsafe`
+- An empty `replace-at?` element at runtime.
+- Using `restrict-assets?` with `with-all-assets-unsafe`.
 - `block-reward` now returns `none` until the value is written, instead of resulting in a rejectable transaction. Note that this may not result in a failed transaction.
 
 ## sBTC deposit address v2 for miner commits
 
 Since epoch 4.0, miners send BTC to the `pox-5` contract by spending to an sBTC deposit address. The current miner code creates this address using the aggregate key published by the sBTC signers.
 
-After activation, in the first reward cycle that starts after epoch 4.1, miners will use the v2 sBTC deposit address format. This new format utilizes the public keys of sBTC signers to generate a k-of-n multisig pay-to-taproot address.
+After activation, in the first reward cycle that starts after epoch 4.1 activates, miners will use the v2 sBTC deposit address format. This new format utilizes the public keys of sBTC signers to generate a k-of-n multisig pay-to-taproot address.
 
 For more information on the v2 deposit address format, refer to [sbtc#2142](https://github.com/stacks-sbtc/sbtc/issues/2142).
 
