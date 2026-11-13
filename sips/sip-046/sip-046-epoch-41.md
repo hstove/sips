@@ -22,6 +22,8 @@ License: BSD-2-Clause
 
 Sign-off:
 
+- Werner <werner@trustmachines.co>, SIP Editor; 2026-11-13
+
 Discussions-To:
 
 # Abstract
