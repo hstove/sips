@@ -118,6 +118,10 @@ Previously, trait lookups always used a database lookup, so calling a self-defin
 
 ### 40-byte contract names
 
+This SIP amends the contract name length in
+[SIP-005](../sip-005/sip-005-blocks-and-transactions.md). SIP-005 allows
+contract names of up to 128 bytes. After activation, the limit is 40 bytes.
+
 Contract names longer than 40 bytes are now rejected everywhere:
 
 - transaction arguments and recipients
@@ -180,6 +184,11 @@ This SIP builds upon the existing definitions of the Clarity language:
 - [SIP-044 (Clarity 6)](../sip-044/sip-044-clarity6.md)
 
 It also builds upon the introduction of Bitcoin Staking as it relates to how miners send funds through sBTC, as defined in [SIP-045](../sip-045/sip-045-pox-5-bitcoin-staking.md).
+
+It amends the contract name length defined in
+[SIP-005](../sip-005/sip-005-blocks-and-transactions.md) and removes the
+Versioned Smart Contract transaction payload defined in
+[SIP-015](../sip-015/sip-015-network-upgrade.md).
 
 # Backwards Compatibility
 
