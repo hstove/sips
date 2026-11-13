@@ -1,6 +1,6 @@
 # Preamble
 
-SIP Number: XXX
+SIP Number: 046
 
 Title: Epoch 4.1 and Clarity 7
 
@@ -8,7 +8,7 @@ Author(s):
 
 - Hank Stoever <hank@stackslabs.com>
 
-Status: Draft
+Status: Accepted
 
 Consideration: Technical
 
